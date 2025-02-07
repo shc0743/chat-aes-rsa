@@ -1,0 +1,15 @@
+<div v-deep v-bind="$attrs">
+    <form @submit.prevent v-if="!isLoading && !isDone">
+        <div style="margin-bottom: 0.5em;">选择文件</div>
+        <!-- TODO: support multiple files -->
+        <file-picker-ui :multiple="false" required ref="filepicker"></file-picker-ui>
+        <div style="display: flex; margin-top: 1em;">
+            <ElButton style="flex: 1;" @click="work(1)">加密文件</ElButton>
+            <ElButton style="flex: 1;" @click="work(2)">解密文件</ElButton>
+        </div>
+    </form>
+
+    <style>
+        
+    </style>
+</div>

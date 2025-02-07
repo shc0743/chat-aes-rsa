@@ -1,0 +1,135 @@
+<div v-deep v-bind="$attrs" class="root" @keydown.ctrl.r.prevent="newConversation">
+    <div style="display: flex; justify-content: space-between;">
+        <div>当前Key: {{keyaes && '******' || '没有'}}</div>
+        <a href="javascript:" @click="newConversation">新对话</a>
+    </div>
+
+    <div class="chat-ui" v-deep ref="ui">
+        <template v-for="item in messages">
+            <div v-if="item.type === 'system'" class="chat-message-item chat-message-system-item" v-deep>
+                <div class="chat-message-system-text">{{item.content}}</div>
+            </div>
+            <div v-else class="chat-message-item" :data-sent="item.sender === 0" v-deep :data-id="item.message_id" @contextmenu="showMenu($event, item)">
+                <div class="chat-user-avatar"><ElAvatar>User</ElAvatar></div>
+                <div class="chat-message-contents">
+                    <div class="chat-message-text" v-deep>
+                        <span>{{item.show_all ? item.message : ((item.message.length > MAX_TEXT_LENGTH) ? (item.message.substring(0, MAX_TEXT_LENGTH) + '…') : item.message)}}</span>
+                        <a v-if="!item.show_all && item.message.length > MAX_TEXT_LENGTH" href="javascript:" @click="item.show_all = true">显示全部({{item.message.length / 1024}}KB)</a>
+                    </div>
+                    <div class="chat-message-encrypted" v-deep>
+                        <div class="chat-message-encrypted-payload">{{item.data}}</div>
+                        <a href="javascript:" @click="copydata(item.data)" @dragstart="$event.dataTransfer.setData('text/plain', item.data)">复制</a>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <div class="input-ui" v-deep>
+        <ElButton class="flexible-feature main-feature decrypt-button" :disabled="isLoading || !keyaes" :type="next_message === 1 ? 'success' : undefined" :plain="next_message === 1 ? true : false" @click="decrypt_message" v-deep>解密</ElButton>
+        <ElInput type="textarea" :rows="3" v-model="text" v-deep placeholder="输入文本..." @keydown.enter="onInputBoxKeyDown" />
+        <ElButton class="flexible-feature main-feature send-button" :disabled="isLoading || !keyaes" :type="next_message === 0 ? 'success' : undefined" :plain="next_message === 0 ? true : false" @click="send_message" v-deep title="按 Alt+Enter 始终发送消息">发送</ElButton>
+    </div>
+    <div class="input-ui flexible-feature alternative-feature" v-deep style="margin-top: 0.5em;"><div style="display: flex;">
+        <ElButton style="flex: 1;" class="flexible-feature alternative-feature decrypt-button" :disabled="isLoading || !keyaes" @click="decrypt_message" v-deep>解密</ElButton>
+        <ElButton style="flex: 1;" class="flexible-feature alternative-feature send-button" :disabled="isLoading || !keyaes" @click="send_message" v-deep>发送</ElButton>
+    </div></div>
+
+    <style>
+    .root>>> {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .chat-ui>>> {
+        background-color: #ededed;
+    }
+    .chat-ui>>> {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: auto;
+        padding: 0.5em;
+        margin: 0.5em 0;
+        border: var(--el-border);
+        border-radius: 10px;
+    }
+    .input-ui>>> {
+        display: flex;
+    }
+    .decrypt-button>>> {
+        height: auto;
+        margin-right: 0.5em;
+    }
+    .send-button>>> {
+        height: auto;
+        margin-left: 0.5em;
+    }
+    .chat-message-item>>> {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .chat-message-item.chat-message-system-item>>> {
+        justify-content: center;
+        font-size: small;
+    }
+    .chat-message-item.chat-message-system-item>>> .chat-message-system-text {
+        padding: 5px;
+        border-radius: 2px;
+        color: #a6a6a6;
+        font-family: monospace;
+    }
+    .chat-message-item[data-sent="true"]>>> {
+        flex-direction: row-reverse;
+    }
+    .chat-message-item>>> .chat-user-avatar {
+        margin-right: 0.5em;
+        height: 100%;
+    }
+    .chat-message-item+.chat-message-item>>> {
+        margin-top: 1.5em;
+    }
+    .chat-message-item[data-sent="true"]>>> .chat-user-avatar {
+        margin-left: 0.5em;
+        margin-right: 0;
+    }
+    .chat-message-item>>> .chat-message-contents {
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 0 4px 0 #bbb;
+        word-break: break-all;
+        overflow: hidden;
+        --margin-value: 10%;
+        margin-right: var(--margin-value);
+        background-color: #f7f7f7;
+        white-space: pre-wrap;
+    }
+    .chat-message-item[data-sent="true"]>>> .chat-message-contents {
+        background-color: #d2f4c1;
+        margin-left: var(--margin-value);
+        margin-right: 0;
+    }
+    .chat-message-item>>> .chat-message-encrypted {
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        padding: 5px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        background-color: #ececec;
+        margin-top: 0.5em;
+        display: flex;
+    }
+    .chat-message-item[data-sent="true"]>>> .chat-message-encrypted {
+        border-color: #ccc;
+        background-color: #ececec;
+    }
+    .chat-message-item>>> .chat-message-encrypted-payload {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-right: 5px;
+    }
+    </style>
+</div>

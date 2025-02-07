@@ -1,0 +1,126 @@
+<main v-deep v-bind="$attrs">
+    <!-- copyrightBox -->
+    <resizable-widget ref="copyrightBox" style="width: 800px; height: 480px; --padding: 0;">
+        <widget-caption slot="widget-caption">
+            <span>Copyright & License</span>
+            <button style="float:right" data-exclude-bindmove="" @click="$refs.copyrightBox.close()">x</button>
+        </widget-caption>
+        <iframe sandbox="allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox" v-if="loadCopyRightFrame" src="./assets/static/LICENSE.html" style="width: 100%; height: 100%; overflow: hidden; border: 0; box-sizing: border-box; display: flex; flex-direction: column;"></iframe>
+    </resizable-widget>
+    <!-- copyrightBox -->
+
+    <!-- 基本信息展示 -->
+    <resizable-widget ref="info_box" style="width: 500px; height: 300px;"> 
+        <widget-caption slot="widget-caption">
+            <span>系统信息</span>
+            <button style="float:right" data-exclude-bindmove="" @click="$refs.info_box.close()">x</button>
+        </widget-caption>
+        <div style="display: flex; flex-direction: column; height: 100%; overflow: auto; white-space: normal; word-break: break-all;">
+            <div>使用 Vue.JS。<a href="./copyright/" @click.prevent="((loadCopyRightFrame = true), ($refs.copyrightBox.open = true))">点击查看版权信息。</a></div>
+            <hr style="box-sizing: border-box; width: 100%;">
+            <div>版本: {{appVersion}}</div>
+            <div>加载用时: {{+appLoadTime / 1000}}s</div>
+        </div>
+    </resizable-widget>
+    <!-- 基本信息展示 -->
+
+    <div class="main-ui" v-deep v-show="isConnected" ref="main_ui">
+        <ElTabs v-deep class="top-tabs" v-model="active_panel" :before-leave="() => !isLoading">
+            <ElTabPane v-for="i in appTabs" :disabled="isLoading" :label="i.text" :name="i.tab" />
+        </ElTabs>
+        <MessageMain class="left-panel my-panel" v-deep v-show="active_panel === 'chat'"
+            :keyaes="key_aes"></MessageMain>
+        <Suspense v-if="active_panel === 'transfer'"><FTUI v-deep class="my-panel"></FTUI><template #fallback><div class="llui" v-deep>正在加载，请稍候...</div></template></Suspense>
+        <Suspense v-if="active_panel === 'key'"><MakeKey class="my-panel" v-deep
+            v-model:keyaes="key_aes" v-model:keyrsa="key_rsa" v-model:keyrsaprivate="key_rsa_private"></MakeKey><template #fallback><div class="llui" v-deep>正在加载，请稍候...</div></template></Suspense>
+        <div v-if="active_panel === 'set'" style="padding: 1em;">
+            <h1>设置</h1>
+            <div style="margin-bottom: 0.5em;">主题：<ElButton @click="changeTheme">切换为{{colorDark?'浅':'深'}}色模式</ElButton></div>
+            <div style="margin-bottom: 0.5em;">清除：<ElButton @click="reset">清除数据</ElButton></div>
+            <div>关于：<ElButton @click="$refs.info_box.open = true">关于</ElButton></div>
+        </div>
+    </div>
+
+    <template v-if="!isConnected">
+        <div style="display: flex; flex-direction: column; overflow: hidden; height: 100%; padding: 1em;" v-if="isSupported">
+            <ElCheckbox v-model="autologon">自动登录</ElCheckbox>
+            <ElButton v-deep :disabled="isLoading" @click="connect" type="primary" plain>{{isConnected ? '断开连接' : '登录'}}</ElButton>
+        </div>
+        <div style="display: flex; flex-direction: column; overflow: hidden; height: 100%; padding: 1em;" v-else>
+            <b>当前浏览器不支持使用此应用程序。</b>
+            <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Crypto/subtle" target="_blank" rel="noopener noreferrer" @click.stop>点击查看兼容性数据。</a>
+        </div>
+    </template>
+
+    <iframe style="display: none;" srcdoc="null" name="download_frame"></iframe>
+</main>
+
+<style>
+    :root * {
+        font-family: Consolas, '宋体', NSimsun, monospace;
+    }
+    #myApp, #app {
+        position: absolute;
+        left: 0; top: 0; right: 0; bottom: 0;
+        inset: 0;
+        width: 100%; height: 100%;
+        box-sizing: border-box;
+        padding: 0;
+    }
+    main>>> {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+    }
+    main>>> .flexible-feature.alternative-feature {
+        display: none !important;
+    }
+    @media screen and (max-width: 500px) {
+        main>>> .flexible-feature.main-feature {
+            display: none !important;
+        }
+        main>>> .flexible-feature.alternative-feature {
+            display: revert !important;
+        }
+    }
+    main>>> .main-ui>>> {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        flex-direction: row;
+    }
+    main>>> .main-ui > * {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+    main>>> nav>>> .el-drawer__body {
+        overflow: auto; height: 100%;
+        box-sizing: border-box;
+    }
+    main>>> .main-ui>>> {
+        flex-direction: column;
+    }
+    main>>> .main-ui>>> .top-tabs>>> {
+        padding: 0 1em;
+    }
+    main>>> .main-ui>>> .my-panel>>> {
+        flex: 1 1 0%;
+        padding: 0.5em;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    main>>> .main-ui>>> .my-panel>>> {
+        padding-top: 0 !important;
+    }
+    main>>> style {
+        display: none !important;
+    }
+    .llui>>> {
+        font-size: large;
+        padding: 0 0.5em;
+    }
+</style>

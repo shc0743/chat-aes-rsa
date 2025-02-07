@@ -1,0 +1,89 @@
+<div v-deep v-bind="$attrs" class="root">
+    <div v-deep class="container">
+        <div style="display: flex; align-items: center;">
+            <span style="margin-right: 1em;">选择使用方式</span>
+            <ElRadioGroup v-model="usage_type">
+                <ElRadio value="new" :disabled="(keyaes || keyrsa || keyrsaprivate) ? true : false">新用户</ElRadio>
+                <ElRadio value="old">现有用户</ElRadio>
+            </ElRadioGroup>
+        </div>
+        
+        <div style="display: flex; align-items: center;" v-deep>
+            <span style="margin-right: 1em;">保存密钥</span>
+            <ElCheckbox v-model="shouldSaveKey">提交时保存</ElCheckbox>
+        </div>
+        
+        <ElCard v-deep class="mt-1" v-if="usage_type === 'old'">
+            <template #header>填写 Primary 密钥</template>
+            <!-- [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) -->
+            <form action="./" style="all: unset" @submit.prevent><ElInput :disabled="isLoading" type="password" :rows="3" v-model="key_primary" clearable show-password /></form>
+        </ElCard>
+
+        <template v-if="usage_type === 'new'">
+            <ElCard v-deep class="mt-1">
+                <template #header>一键生成加密密钥</template>
+                <div style="display: flex;" v-deep>
+                    <ElButton style="flex: 1;" @click="genall" type="primary" plain :disabled="isLoading">立即生成</ElButton>
+                </div>
+            </ElCard>
+        </template>
+
+        <template v-if="usage_type === 'old'">
+            <ElCard v-deep class="mt-1" v-if="!(keyaes && keyrsa && keyrsaprivate)">
+                <template #header>上传已有的密钥</template>
+                <ElInput type="textarea" :rows="3" v-model="key_data" :disabled="!key_primary" />
+                <div style="display: flex;" v-deep class="mt-1">
+                    <ElButton style="flex: 1;" @click="parse_user_key" type="primary" plain :disabled="!key_primary">解析密钥</ElButton>
+                </div>
+            </ElCard>
+
+            <ElCard v-deep class="mt-1">
+                <template #header>填写 AES 密钥</template>
+                <ElInput type="textarea" :rows="3" v-model="keyaes_input" />
+                <div style="display: flex;" v-deep class="mt-1">
+                    <ElButton style="flex: 1;" @click="submit('keyaes')" type="primary" plain>提交密钥</ElButton>
+                    <ElButton style="flex: 1;" @click="genaes" v-if="!keyaes">生成随机密钥</ElButton>
+                </div>
+            </ElCard>
+
+            <ElCard v-deep class="mt-1">
+                <template #header>填写 RSA 密钥</template>
+                <div style="margin-bottom: 0.5em;">公钥</div>
+                <ElInput type="textarea" :rows="6" v-model="keyrsa_input" />
+                <div style="margin-bottom: 0.5em;" v-deep class="mt-1">私钥</div>
+                <ElInput type="textarea" :rows="6" v-model="keyrsaprivate_input" />
+                <div style="display: flex;" v-deep class="mt-1">
+                    <ElButton style="flex: 1;" @click="() => { submit(['keyrsa', 'keyrsaprivate']); }" type="primary" plain>提交密钥</ElButton>
+                    <ElButton style="flex: 1;" @click="genrsa" v-if="!keyrsa || !keyrsaprivate">生成随机密钥</ElButton>
+                </div>
+            </ElCard>
+
+            <ElCard v-deep class="mt-1" v-if="(keyaes && keyrsa && keyrsaprivate)">
+                <template #header>导出密钥</template>
+                <ElInput type="textarea" :rows="3" v-model="key_data" readonly/>
+                <div style="color: red; font-weight: bold;" v-deep class="mt-1" v-if="!key_primary">必须输入主密钥才能继续导出密钥。</div>
+                <div style="display: flex;" v-deep class="mt-1">
+                    <ElButton style="flex: 2;" @click="export_do" type="primary" plain :disabled="!key_primary">{{key_data ? '重新' : ''}}导出密钥</ElButton>
+                    <ElButton style="flex: 1;" @click="export_copy" v-if="key_data">复制</ElButton>
+                    <ElButton style="flex: 1;" @click="export_down" v-if="key_data">下载</ElButton>
+                </div>
+            </ElCard>
+
+            <ElCard v-deep class="mt-1">
+                <template #header>清除密钥</template>
+                <div style="display: flex;" v-deep>
+                    <ElButton style="flex: 1;" @click="clearkey" type="danger" plain :disabled="isLoading">清除所有密钥</ElButton>
+                </div>
+            </ElCard>
+        </template>
+    </div>
+
+    <style>
+    .container>>> {
+        overflow: auto;
+    }
+    .mt-1>>> {
+        margin-top: 1em;
+    }
+    </style>
+</div>
